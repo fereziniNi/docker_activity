@@ -1,0 +1,35 @@
+services:
+  db:
+      image: postgres:16-alpine
+      restart: unless-stopped
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: counter_db
+      volumes:
+        - db_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
+
+  backend:
+      image: node:20-alpine
+      restart: unless-stopped
+      working_dir: /app
+      volumes:
+        - ./backend:/app
+      command: sh -c "npm install --silent && node index.js"
+      environment:
+        DB_HOST: db
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_PASS: postgres
+        DB_NAME: counter_db
+        PORT: 3001
+      depends_on:
+        db:
+          condition: service_healthy
+volumes:
+  db_data:
