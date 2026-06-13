@@ -16,12 +16,8 @@ services:
       retries: 10
 
   backend:
-    image: node:20-alpine
+    image: ghcr.io/ferezinini/docker_activity:main
     restart: unless-stopped
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-    command: sh -c "npm install --silent && node index.js"
     environment:
       DB_HOST: db
       DB_PORT: 5432
