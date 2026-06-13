@@ -1,0 +1,49 @@
+name: Criar e Publicar Imagem Docker
+
+# Roda em todo push na main e toda vez que uma nova 'release' for publicada
+on:
+  push:
+    branches: [ "main" ]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Baixa o código do repositório para o servidor do Github Actions
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # Faz login no GitHub Container Registry usando o token automático do Github
+      - name: Login no Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extrai metadados para a imagem
+      - name: Extrair metadados para o Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # 4. Constrói a imagem a partir do Dockerfile e faz o push para o registro
+      - name: Build e Push da imagem Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
